@@ -1,0 +1,64 @@
+{
+  "symbols": [
+    {
+      "symbol": "BTCUSDT",
+      "name": "Bitcoin"
+    },
+    {
+      "symbol": "ETHUSDT",
+      "name": "Ethereum"
+    },
+    {
+      "symbol": "BNBUSDT",
+      "name": "BNB"
+    },
+    {
+      "symbol": "SOLUSDT",
+      "name": "Solana"
+    },
+    {
+      "symbol": "XRPUSDT",
+      "name": "XRP"
+    },
+    {
+      "symbol": "ADAUSDT",
+      "name": "Cardano"
+    },
+    {
+      "symbol": "DOGEUSDT",
+      "name": "Dogecoin"
+    },
+    {
+      "symbol": "AVAXUSDT",
+      "name": "Avalanche"
+    },
+    {
+      "symbol": "DOTUSDT",
+      "name": "Polkadot"
+    },
+    {
+      "symbol": "MATICUSDT",
+      "name": "Polygon"
+    },
+    {
+      "symbol": "LTCUSDT",
+      "name": "Litecoin"
+    },
+    {
+      "symbol": "UNIUSDT",
+      "name": "Uniswap"
+    },
+    {
+      "symbol": "LINKUSDT",
+      "name": "Chainlink"
+    },
+    {
+      "symbol": "ATOMUSDT",
+      "name": "Cosmos"
+    },
+    {
+      "symbol": "ETCUSDT",
+      "name": "Ethereum Classic"
+    }
+  ]
+}

@@ -1,0 +1,93 @@
+version: '3.8'
+
+services:
+  # === FRONTEND ===
+  frontend:
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend/nginx.windows.conf:/etc/nginx/conf.d/default.conf
+
+  # === API GATEWAY ===
+  api-gateway:
+    ports:
+      - "${API_GATEWAY_PORT}:${API_GATEWAY_PORT}"
+    environment:
+      - AUTH_SERVICE_URL=http://auth-service:8081
+      - MARKET_DATA_URL=http://market-data:8001
+      - TRADING_SERVICE_URL=http://trading-service:8082
+      - PORTFOLIO_SERVICE_URL=http://portfolio-service:8083
+      - BETS_SERVICE_URL=http://bets-service:8084
+
+  # === MARKET DATA SERVICE ===
+  market-data:
+    ports:
+      - "8001:8001"
+    environment:
+      - DB_HOST=postgres
+      - REDIS_ADDR=redis:6379
+      - KAFKA_BROKERS=kafka:29092
+
+  # === CLIENT SIMULATOR ===
+  client-simulator:
+    environment:
+      - KAFKA_BROKERS=kafka:29092
+
+  # === DATABASE ===
+  postgres:
+    ports:
+      - "5432:5432"
+
+  # === AUTH SERVICE ===
+  auth-service:
+    ports:
+      - "8081:8081"
+    environment:
+      - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/auth_db?sslmode=disable
+
+  # === PORTFOLIO SERVICE ===
+  portfolio-service:
+    ports:
+      - "8083:8083"
+    environment:
+      - DB_HOST=postgres
+
+  # === TRADING SERVICE ===
+  trading-service:
+    ports:
+      - "8082:8082"
+    environment:
+      - DB_HOST=postgres
+      - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:${POSTGRES_PORT}/${TRADING_POSTGRES_DB}?sslmode=disable
+      - REDIS_ADDR=redis:6379
+      - KAFKA_BROKERS=kafka:29092
+      - MARKET_DATA_URL=http://market-data:8001
+      - PORTFOLIO_SERVICE_URL=http://portfolio-service:8083
+
+  # === BETS SERVICE ===
+  bets-service:
+    ports:
+      - "8084:8084"
+    environment:
+      - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:${POSTGRES_PORT}/${BETS_POSTGRES_DB}?sslmode=disable
+      - REDIS_ADDR=redis:6379
+      - PORTFOLIO_URL=http://portfolio-service:8083
+      - MARKET_DATA_URL=http://market-data:8001
+
+  # === REDIS ===
+  redis:
+    ports:
+      - "6379:6379"
+
+  # === ZOOKEEPER ===
+  zookeeper:
+    ports:
+      - "2181:2181"
+
+  # === KAFKA ===
+  kafka:
+    ports:
+      - "9095:9095"
+    environment:
+      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9095
+      - KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181

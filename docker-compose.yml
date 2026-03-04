@@ -1,0 +1,204 @@
+services:
+  # === FRONTEND ===
+  frontend:
+    build: ./frontend
+    container_name: frontend
+
+    ports:
+      - "8080:80"
+    depends_on:
+      - api-gateway
+
+  # === 0. API GATEWAY ===  # === 0. API GATEWAY ===
+  api-gateway:
+    build: ./services/api-gateway
+    container_name: api-gateway
+
+    environment:
+      - PORT=${API_GATEWAY_PORT}
+      - AUTH_SERVICE_URL=${AUTH_SERVICE_URL}
+      - MARKET_DATA_URL=${MARKET_DATA_URL}
+      - TRADING_SERVICE_URL=${TRADING_SERVICE_URL}
+      - PORTFOLIO_SERVICE_URL=${PORTFOLIO_SERVICE_URL}
+      - BETS_SERVICE_URL=${BETS_SERVICE_URL}
+      - JWT_SECRET=${AUTH_JWT_SECRET}
+    depends_on:
+      - auth-service
+      - market-data
+      - trading-service
+      - portfolio-service
+      - bets-service
+
+  # === 1. MARKET DATA SERVICE ===
+  market-data:
+    build: ./services/market-data-service
+    container_name: market-data
+
+    environment:
+      - DB_HOST=${POSTGRES_HOST}
+      - DB_PORT=${POSTGRES_PORT}
+      - DB_USER=${POSTGRES_USER}
+      - DB_PASSWORD=${POSTGRES_PASSWORD}
+      - DB_NAME=${MARKET_POSTGRES_DB}
+      - REDIS_ADDR=${REDIS_ADDR}
+      - KAFKA_BROKERS=kafka:${KAFKA_INTERNAL_PORT}
+      - UPDATE_INTERVAL_SEC=${MARKET_DATA_UPDATE_INTERVAL_SEC}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      kafka:
+        condition: service_started
+
+  # === 2. CLIENT SIMULATOR (Tool) ===
+  client-simulator:
+    build: ./services/client-simulator
+    container_name: client-simulator
+    depends_on:
+      kafka:
+        condition: service_started
+    profiles:
+      - tools
+
+  # === 3. DATABASE (Postgres) ===
+  postgres:
+    image: postgres:15
+
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      AUTH_POSTGRES_DB: ${AUTH_POSTGRES_DB}
+      MARKET_POSTGRES_DB: ${MARKET_POSTGRES_DB}
+    # ports:
+    #   - "5432:5432"
+    volumes:
+      - postgres_data_debian:/var/lib/postgresql/data
+      - ./migrations/init_db.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER}" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # === 4. AUTH SERVICE ===
+  auth-service:
+    build: ./services/auth-service
+    container_name: auth-service
+
+    environment:
+      - PORT=${AUTH_SERVICE_PORT}
+      - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/auth_db?sslmode=disable
+      - PGSSLMODE=disable
+      - JWT_SECRET=${AUTH_JWT_SECRET}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # === PORTFOLIO-SERVICE ===
+  portfolio-service:
+    build: ./services/portfolio-service
+    container_name: portfolio-service
+
+    environment:
+      - PORT=${PORTFOLIO_SERVICE_PORT}
+      - DB_HOST=${POSTGRES_HOST}
+      - DB_USER=${POSTGRES_USER}
+      - DB_PASSWORD=${POSTGRES_PASSWORD}
+      - DB_NAME=${PORTFOLIO_POSTGRES_DB}
+      - DB_PORT=${POSTGRES_PORT}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # === 5. TRADING SERVICE (Исправлено имя!) ===
+  trading-service:
+    build: ./services/trading-service
+    container_name: trading-service
+
+    environment:
+      # Настройки сервера
+      - PORT=${TRADING_SERVICE_PORT}
+
+      # Настройки БД (Вариант 1 - по частям)
+      - DB_HOST=${POSTGRES_HOST}
+      - DB_PORT=${POSTGRES_PORT}
+      - DB_USER=${POSTGRES_USER}
+      - DB_PASSWORD=${POSTGRES_PASSWORD}
+      - DB_NAME=${TRADING_POSTGRES_DB}
+
+      # Настройки БД (Вариант 2 - строка подключения)
+      - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${TRADING_POSTGRES_DB}?sslmode=disable
+
+      # Инфраструктура
+      - REDIS_ADDR=${REDIS_ADDR}
+      - KAFKA_BROKERS=kafka:${KAFKA_INTERNAL_PORT}
+      - JWT_SECRET=${AUTH_JWT_SECRET}
+      - MARKET_DATA_URL=${MARKET_DATA_URL}
+      - PORTFOLIO_SERVICE_URL=${PORTFOLIO_SERVICE_URL}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+
+  # === 6. BETS SERVICE ===
+  bets-service:
+    build: ./services/bets-service
+    container_name: bets-service
+
+    environment:
+      - PORT=${BETS_SERVICE_PORT}
+      - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${BETS_POSTGRES_DB}?sslmode=disable
+      - REDIS_ADDR=${REDIS_ADDR}
+      - PORTFOLIO_URL=${PORTFOLIO_SERVICE_URL}
+      - MARKET_DATA_URL=${MARKET_DATA_URL}
+      - JWT_SECRET=${AUTH_JWT_SECRET}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  # === 7. REDIS ===
+  redis:
+    image: redis:7-alpine
+    # ports:
+    #   - "6379:6379"
+
+    # === 7. ZOOKEEPER ===
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.4
+    hostname: zookeeper
+    container_name: zookeeper
+
+    # ports:
+    #   - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: ${ZOOKEEPER_PORT}
+      ZOOKEEPER_TICK_TIME: 2000
+
+  # === 8. KAFKA ===
+  kafka:
+    image: confluentinc/cp-kafka:7.4.4
+    hostname: kafka
+    container_name: kafka
+
+    depends_on:
+      - zookeeper
+    # ports:
+    #   - "9095:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: '${ZOOKEEPER_CONNECT}'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:${KAFKA_INTERNAL_PORT},PLAINTEXT_HOST://0.0.0.0:${KAFKA_PORT}
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:${KAFKA_INTERNAL_PORT},PLAINTEXT_HOST://localhost:${KAFKA_PORT}
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+
+volumes:
+  postgres_data_new:
+  postgres_data_debian:

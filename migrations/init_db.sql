@@ -1,0 +1,5 @@
+CREATE DATABASE auth_db;
+CREATE DATABASE market_db;
+CREATE DATABASE portfolio_db;
+CREATE DATABASE trading_db;
+CREATE DATABASE bets_db;

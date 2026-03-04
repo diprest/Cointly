@@ -1,0 +1,30 @@
+.nav {
+  display: flex;
+  gap: 12px;
+}
+
+.btnPrimary,
+.btnGhost {
+  border-radius: 12px;
+  height: 36px;
+  padding: 0 14px;
+  font-weight: 800;
+  cursor: pointer;
+  border: 2px solid transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.btnPrimary {
+  background: var(--accent, #e6dd9b);
+  color: #111;
+}
+
+.btnGhost {
+  background: transparent;
+  color: var(--text, #e7e7ea);
+  border-color: #3a3a40;
+}

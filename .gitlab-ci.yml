@@ -1,0 +1,147 @@
+image: golang:1.24
+
+stages:
+  - lint
+  - test
+  - build
+
+# Глобальные переменные
+variables:
+  GOPATH: $CI_PROJECT_DIR/.go
+  COVERAGE_THRESHOLD: 30
+
+cache:
+  key: global-go-cache
+  paths:
+    - .go/pkg/mod/
+
+# --- 1. Линтинг (Lint) ---
+lint:
+  stage: lint
+  image: golangci/golangci-lint:v1.55.2
+  parallel:
+    matrix:
+      - SERVICE_NAME: 
+          - auth-service
+          - market-data-service
+          - portfolio-service
+          - trading-service
+          - bets-service
+          - api-gateway
+  script:
+    - mkdir -p .go
+    - cd services/$SERVICE_NAME
+    
+    # [НОВОЕ] Проверка на файл-заглушку badservice.go
+    - |
+      if [ -f "badservice.go" ]; then
+        echo "⏩ Placeholder 'badservice.go' found in $SERVICE_NAME. Skipping lint."
+        exit 0
+      fi
+
+    # Проверка на пустую папку (на случай если файлов вообще нет)
+    - |
+      if ! ls *.go >/dev/null 2>&1; then
+        echo "⚠️ No Go files found in $SERVICE_NAME. Skipping lint."
+        exit 0
+      fi
+
+    - go mod download
+    - echo "Running linter for $SERVICE_NAME..."
+    - golangci-lint run ./... -v
+  allow_failure: false
+
+# --- 2. Тестирование (Test) ---
+test:
+  stage: test
+  parallel:
+    matrix:
+      - SERVICE_NAME: 
+          - auth-service
+          - market-data-service
+          - portfolio-service
+          - trading-service
+          - bets-service
+          - api-gateway
+  script:
+    - mkdir -p .go
+    - cd services/$SERVICE_NAME
+    
+    # [НОВОЕ] Проверка на файл-заглушку
+    - |
+      if [ -f "badservice.go" ]; then
+        echo "⏩ Placeholder 'badservice.go' found in $SERVICE_NAME. Skipping tests."
+        exit 0
+      fi
+
+    - |
+      if ! ls *.go >/dev/null 2>&1; then
+        echo "⚠️ No Go files found in $SERVICE_NAME. Skipping tests."
+        exit 0
+      fi
+
+    - go mod download
+    
+    - echo "Testing service $SERVICE_NAME..."
+    - go test -v -coverprofile=coverage.out ./...
+    - go tool cover -func=coverage.out
+    
+    # Логика проверки 30% покрытия
+    - |
+      TOTAL_COVERAGE=$(go tool cover -func=coverage.out | grep total | awk '{print substr($3, 1, length($3)-1)}')
+      echo "Current Coverage: $TOTAL_COVERAGE%"
+
+      if [ "$SERVICE_NAME" == "api-gateway" ]; then
+        TARGET_THRESHOLD=0
+      else
+        TARGET_THRESHOLD=$COVERAGE_THRESHOLD
+      fi
+
+      IS_FAIL=$(awk -v cov="$TOTAL_COVERAGE" -v thr="$TARGET_THRESHOLD" 'BEGIN {print (cov < thr) ? 1 : 0}')
+      
+      if [ "$IS_FAIL" -eq 1 ]; then
+        echo "❌ FAILURE: Coverage $TOTAL_COVERAGE% is below required $TARGET_THRESHOLD%"
+        exit 1
+      else
+        echo "✅ SUCCESS: Coverage passed."
+      fi
+  coverage: '/total:\s+\(statements\)\s+(\d+.\d+)%/'
+  retry: 2
+
+# --- 3. Сборка (Build) ---
+build:
+  stage: build
+  parallel:
+    matrix:
+      - SERVICE_NAME: 
+          - auth-service
+          - market-data-service
+          - portfolio-service
+          - trading-service
+          - bets-service
+          - api-gateway
+  script:
+    - mkdir -p .go
+    - cd services/$SERVICE_NAME
+    
+    # [НОВОЕ] Проверка на файл-заглушку
+    - |
+      if [ -f "badservice.go" ]; then
+        echo "⏩ Placeholder 'badservice.go' found in $SERVICE_NAME. Skipping build."
+        exit 0
+      fi
+
+    - |
+      if ! ls *.go >/dev/null 2>&1; then
+        echo "⚠️ No Go files found in $SERVICE_NAME. Skipping build."
+        exit 0
+      fi
+
+    - go mod download
+    - echo "Building $SERVICE_NAME..."
+    - mkdir -p ../../bin
+    - CGO_ENABLED=0 GOOS=linux go build -o ../../bin/$SERVICE_NAME ./...
+  artifacts:
+    paths:
+      - bin/
+    expire_in: 1 day

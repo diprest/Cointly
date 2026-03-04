@@ -1,0 +1,152 @@
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modalContent {
+  background: #1e1e1e;
+  padding: 24px;
+  border-radius: 12px;
+  width: 400px;
+  max-width: 90%;
+  color: #fff;
+  position: relative;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.closeBtn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: none;
+  border: none;
+  color: #888;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.closeBtn:hover {
+  color: #fff;
+}
+
+.title {
+  margin-top: 0;
+  margin-bottom: 20px;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.section {
+  margin-bottom: 24px;
+}
+
+.sectionTitle {
+  font-size: 16px;
+  margin-bottom: 12px;
+  color: #ccc;
+  border-bottom: 1px solid #333;
+  padding-bottom: 8px;
+}
+
+.formGroup {
+  margin-bottom: 12px;
+}
+
+.label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 14px;
+  color: #aaa;
+}
+
+.input {
+  width: 100%;
+  padding: 8px 12px;
+  background: #2a2a2a;
+  border: 1px solid #444;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 14px;
+}
+
+.input:focus {
+  outline: none;
+  border-color: #007bff;
+}
+
+.btn {
+  width: 100%;
+  padding: 10px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.btnPrimary {
+  background: #007bff;
+  color: #fff;
+}
+
+.btnPrimary:hover {
+  background: #0056b3;
+}
+
+.btnDanger {
+  background: #dc3545;
+  color: #fff;
+}
+
+.btnDanger:hover {
+  background: #a71d2a;
+}
+
+.message {
+  margin-top: 8px;
+  font-size: 14px;
+}
+
+.success {
+  color: #28a745;
+}
+
+.error {
+  color: #dc3545;
+}
+
+.resetConfirm {
+  background: #2a2a2a;
+  padding: 12px;
+  border-radius: 6px;
+  margin-top: 10px;
+  border: 1px solid #dc3545;
+}
+
+.resetText {
+  font-size: 13px;
+  color: #ddd;
+  margin-bottom: 12px;
+}
+
+.confirmActions {
+  display: flex;
+  gap: 10px;
+}
+
+.btnCancel {
+  background: #444;
+  color: #fff;
+}
+
+.btnCancel:hover {
+  background: #555;
+}

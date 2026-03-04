@@ -1,0 +1,20 @@
+# Секреты
+.env
+
+# Скомпилированные бинарники
+*.exe
+*.dll
+main
+
+# Папки IDE (если пользуешься VS Code или GoLand)
+.vscode/
+.idea/
+
+# Мусор
+bin
+.go
+
+# Docker volume data (если вдруг создавались локально)
+pgdata/
+
+frontend/node_modules
