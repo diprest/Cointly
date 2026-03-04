@@ -1,12 +1,11 @@
 # 🚀 Go8 Crypto Exchange Platform
-
+base64: 0YfQtdC60LDQudGC0LUsINC/0LDRgNC90Lg=
 [![Go Version](https://img.shields.io/badge/Go-1.24-00ADD8?style=flat&logo=go)](https://golang.org/)
 [![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=flat&logo=docker)](https://www.docker.com/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Tests](https://img.shields.io/badge/Coverage-36%25+-success)](docs/COMPLIANCE_REPORT.md)
 
 Высокопроизводительная микросервисная платформа для торговли криптовалютами с поддержкой лимитных ордеров, портфельного управления и бинарных опционов.
-чекайте, парни
 ---
 
 ## 📋 Содержание
